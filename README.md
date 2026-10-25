@@ -20,7 +20,7 @@ Every idea card lists the Qloo signals behind it, and the agent trace shows each
 
 ## How the agent works
 
-`/api/plan` runs Claude (Vercel AI SDK tool calling) over 11 tools in `lib/tools.ts`:
+`/api/plan` runs an LLM agent (Vercel AI SDK tool calling; Claude, or Gemini on its free tier) over 11 tools in `lib/tools.ts`:
 
 - **Qloo:** `locate_cafe`, `crowd_also_likes`, `local_taste_tags`, `local_favorites`, `nearby_venues`, `find_tags`, `audience_profile`
 - **The owner's world:** `get_cafe_profile`, `review_past_events`, `check_feasibility` (hard checks on budget, staff, seats, hours, liquor license, equipment)
@@ -28,7 +28,7 @@ Every idea card lists the Qloo signals behind it, and the agent trace shows each
 
 After an event, the owner logs attendance, cost, revenue, a rating and guest comments. `review_past_events` turns that into a **repeat / tweak / drop** verdict against a normal quiet night, and the agent must respect it the next time it plans.
 
-If `ANTHROPIC_API_KEY` isn't set, a deterministic offline planner (`lib/offline.ts`) calls the same Qloo tools in a fixed order and matches the results against a catalogue of café formats, so the app still works end to end.
+The model is Claude when `ANTHROPIC_API_KEY` is set, otherwise Gemini when `GOOGLE_GENERATIVE_AI_API_KEY` is set. With neither, a deterministic offline planner (`lib/offline.ts`) calls the same Qloo tools in a fixed order and matches the results against a catalogue of café formats, so the app still works end to end.
 
 Café data stays in the owner's browser (localStorage). No account needed.
 
@@ -36,7 +36,7 @@ Café data stays in the owner's browser (localStorage). No account needed.
 
 ```bash
 npm install
-cp .env.example .env.local   # add QLOO_API_KEY, and ANTHROPIC_API_KEY for the Claude agent
+cp .env.example .env.local   # add QLOO_API_KEY, plus a Gemini or Claude key for the agent
 npm run dev                  # http://localhost:3000
 npm run smoke                # offline planner against live Qloo, printed to the terminal
 ```
@@ -45,14 +45,18 @@ npm run smoke                # offline planner against live Qloo, printed to the
 | --- | --- | --- |
 | `QLOO_API_KEY` | yes | Sent as `X-Api-Key` |
 | `QLOO_API_URL` | no | Defaults to `https://hackathon.api.qloo.com` |
-| `ANTHROPIC_API_KEY` | no | Enables the Claude agent; without it the offline planner runs |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | no | Runs the agent on Gemini; free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| `GEMINI_MODEL` | no | Defaults to `gemini-2.5-flash` |
+| `ANTHROPIC_API_KEY` | no | Runs the agent on Claude (takes priority over Gemini) |
 | `ANTHROPIC_MODEL` | no | Defaults to `claude-sonnet-5-5` |
+
+With no model key, the offline planner runs.
 
 Deploy: import the repo in Vercel and set the same environment variables.
 
 ## Stack
 
-Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Vercel AI SDK 5 with `@ai-sdk/anthropic` · Qloo Insights API
+Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Vercel AI SDK 5 with `@ai-sdk/anthropic` and `@ai-sdk/google` · Qloo Insights API
 
 ## License
 

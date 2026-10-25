@@ -1,10 +1,28 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { streamText, tool, stepCountIs, type StopCondition, type ToolSet } from "ai";
+import { google } from "@ai-sdk/google";
+import { streamText, tool, stepCountIs, type LanguageModel, type StopCondition, type ToolSet } from "ai";
 import { makeTools, type ToolContext } from "./tools";
 import type { PlanEvent } from "./events";
 import type { Plan } from "./types";
 
-export const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
+export interface AgentModel {
+  provider: "anthropic" | "google";
+  id: string;
+  model: LanguageModel;
+}
+
+/** Claude when its key is set, otherwise Gemini (free tier), otherwise null for the offline planner. */
+export function pickModel(): AgentModel | null {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const id = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
+    return { provider: "anthropic", id, model: anthropic(id) };
+  }
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    const id = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+    return { provider: "google", id, model: google(id) };
+  }
+  return null;
+}
 
 const SYSTEM = `You are Dead Night, an event planner for one independent café. Your job: fill the café's quietest night with an event its neighbourhood will actually show up for, within the owner's real constraints.
 
@@ -24,7 +42,7 @@ Rules:
 - If submit_plan returns accepted:false, fix the listed problems and submit again.
 Keep any prose between tool calls to one short sentence about what you're checking next.`;
 
-export async function runClaudeAgent(ctx: ToolContext, request: string | undefined, emit: (e: PlanEvent) => void) {
+export async function runAgent(model: AgentModel, ctx: ToolContext, request: string | undefined, emit: (e: PlanEvent) => void) {
   const defs = makeTools(ctx);
   const tools: ToolSet = {};
   for (const [name, def] of Object.entries(defs)) {
@@ -48,7 +66,7 @@ export async function runClaudeAgent(ctx: ToolContext, request: string | undefin
   };
 
   const result = streamText({
-    model: anthropic(MODEL),
+    model: model.model,
     system: SYSTEM,
     prompt: `Plan this week's ${ctx.cafe.quietNight} event for ${ctx.cafe.name}.${request ? ` The owner adds: "${request}"` : ""}`,
     tools,

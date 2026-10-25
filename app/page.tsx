@@ -57,7 +57,7 @@ export default function Home() {
         for (const line of lines) {
           if (!line.trim()) continue;
           const e = JSON.parse(line) as PlanEvent;
-          if (e.type === "start") setMode(e.mode === "claude" ? `Claude (${e.model})` : "Offline planner");
+          if (e.type === "start") setMode(e.mode === "agent" ? `AI agent (${e.model})` : "Offline planner");
           else if (e.type === "text") setThoughts((t) => t + e.text);
           else if (e.type === "tool-call") setSteps((s) => [...s, { id: e.id, name: e.name, input: e.input }]);
           else if (e.type === "tool-result") setSteps((s) => s.map((x) => (x.id === e.id ? { ...x, output: e.output } : x)));
