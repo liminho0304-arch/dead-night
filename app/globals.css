@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-night-950: #0b0d14;
+  --color-night-900: #11141e;
+  --color-night-800: #181c2a;
+  --color-night-700: #232839;
+  --color-night-600: #33394f;
+  --color-night-400: #7d84a0;
+  --color-night-200: #c9cde0;
+  --color-lamp-300: #ffd9a0;
+  --color-lamp-400: #f7bd6a;
+  --color-lamp-500: #ee9f3c;
+  --color-sage-400: #8fc9a3;
+  --color-ember-400: #f08a7a;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+html,
+body {
+  background: var(--color-night-950);
+  color: var(--color-night-200);
+}
+
+body {
+  background-image: radial-gradient(ellipse 60% 40% at 80% -10%, rgb(238 159 60 / 0.12), transparent 70%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+@utility card {
+  @apply rounded-2xl border border-night-700 bg-night-900/80 backdrop-blur;
+}
+@utility label {
+  @apply text-xs font-medium uppercase tracking-wider text-night-400;
+}
+@utility input {
+  @apply w-full rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-night-200 placeholder:text-night-400 focus:border-lamp-400 focus:outline-none;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-lamp-400 text-night-950 hover:bg-lamp-300;
+}
+@utility btn-ghost {
+  @apply btn border border-night-600 text-night-200 hover:border-lamp-400 hover:text-lamp-300;
+}
