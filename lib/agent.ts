@@ -11,17 +11,27 @@ export interface AgentModel {
   model: LanguageModel;
 }
 
-/** Claude when its key is set, otherwise Gemini (free tier), otherwise null for the offline planner. */
-export function pickModel(): AgentModel | null {
+/** Models that hit a quota or capacity error, skipped by this server instance for a while. */
+const exhausted = new Map<string, number>();
+const COOLDOWN_MS = 30 * 60 * 1000;
+
+/**
+ * Claude when its key is set, otherwise Gemini (free tier), otherwise none and the offline planner runs.
+ * Model env vars take a comma-separated list; later models are fallbacks when one is overloaded.
+ */
+export function pickModels(): AgentModel[] {
+  for (const [id, until] of exhausted) if (Date.now() > until) exhausted.delete(id);
+  const list = (v: string | undefined, dflt: string) => (v || dflt).split(",").map((x) => x.trim()).filter(Boolean);
   if (process.env.ANTHROPIC_API_KEY) {
-    const id = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
-    return { provider: "anthropic", id, model: anthropic(id) };
+    return list(process.env.ANTHROPIC_MODEL, "claude-sonnet-5-5").map((id) => ({ provider: "anthropic" as const, id, model: anthropic(id) }));
   }
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    const id = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
-    return { provider: "google", id, model: google(id) };
+    // The free tier allows only ~20 requests per model per day, so spread runs across several models.
+    return list(process.env.GEMINI_MODEL, "gemini-3.6-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite")
+      .filter((id) => !exhausted.has(id))
+      .map((id) => ({ provider: "google" as const, id, model: google(id) }));
   }
-  return null;
+  return [];
 }
 
 const SYSTEM = `You are Dead Night, an event planner for one independent café. Your job: fill the café's quietest night with an event its neighbourhood will actually show up for, within the owner's real constraints.
@@ -42,7 +52,26 @@ Rules:
 - If submit_plan returns accepted:false, fix the listed problems and submit again.
 Keep any prose between tool calls to one short sentence about what you're checking next.`;
 
-export async function runAgent(model: AgentModel, ctx: ToolContext, request: string | undefined, emit: (e: PlanEvent) => void) {
+/** Returns true if the agent delivered an accepted plan. */
+export async function runAgent(models: AgentModel[], ctx: ToolContext, request: string | undefined, emit: (e: PlanEvent) => void) {
+  for (let i = 0; i < models.length; i++) {
+    const last = i === models.length - 1;
+    emit({ type: "start", mode: "agent", model: models[i].id });
+    const outcome = await attempt(models[i], ctx, request, emit, last);
+    if (outcome === "planned") return true;
+    if (outcome === "failed") return false;
+  }
+  return false;
+}
+
+/** "retry" means the model failed before doing anything (overloaded, out of quota) and another model can take over. */
+async function attempt(
+  model: AgentModel,
+  ctx: ToolContext,
+  request: string | undefined,
+  emit: (e: PlanEvent) => void,
+  last: boolean,
+): Promise<"planned" | "failed" | "retry"> {
   const defs = makeTools(ctx);
   const tools: ToolSet = {};
   for (const [name, def] of Object.entries(defs)) {
@@ -71,15 +100,19 @@ export async function runAgent(model: AgentModel, ctx: ToolContext, request: str
     prompt: `Plan this week's ${ctx.cafe.quietNight} event for ${ctx.cafe.name}.${request ? ` The owner adds: "${request}"` : ""}`,
     tools,
     stopWhen: [planAccepted, stepCountIs(30)],
+    maxRetries: 1,
   });
 
   const inputs = new Map<string, unknown>();
+  let started = false;
+  let planned = false;
   for await (const part of result.fullStream) {
     switch (part.type) {
       case "text-delta":
         emit({ type: "text", text: part.text });
         break;
       case "tool-call":
+        started = true;
         inputs.set(part.toolCallId, part.input);
         emit({ type: "tool-call", id: part.toolCallId, name: part.toolName, input: part.input });
         break;
@@ -87,12 +120,20 @@ export async function runAgent(model: AgentModel, ctx: ToolContext, request: str
         emit({ type: "tool-result", id: part.toolCallId, name: part.toolName, output: part.output });
         if (part.toolName === "submit_plan" && (part.output as { accepted?: boolean })?.accepted) {
           // The validated plan is the tool's input.
+          planned = true;
           emit({ type: "plan", plan: inputs.get(part.toolCallId) as Plan });
         }
         break;
-      case "error":
-        emit({ type: "error", message: String((part.error as Error)?.message ?? part.error) });
-        break;
+      case "error": {
+        const message = String((part.error as Error)?.message ?? part.error);
+        if (/quota|high demand|overloaded|rate limit|429|503/i.test(message)) exhausted.set(model.id, Date.now() + COOLDOWN_MS);
+        if (!started && !last) return "retry";
+        const reason = /quota|rate limit|429/i.test(message) ? "hit its usage limit" : /high demand|overloaded|503/i.test(message) ? "is overloaded" : "stopped with an error";
+        console.error(`[agent] ${model.id}: ${message}`);
+        emit({ type: "notice", message: `${model.id} ${reason}` });
+        return "failed";
+      }
     }
   }
+  return planned ? "planned" : "failed";
 }

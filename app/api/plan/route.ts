@@ -1,4 +1,4 @@
-import { pickModel, runAgent } from "@/lib/agent";
+import { pickModels, runAgent } from "@/lib/agent";
 import { runOfflinePlanner } from "@/lib/offline";
 import type { PlanEvent } from "@/lib/events";
 import type { PlanRequest } from "@/lib/types";
@@ -10,16 +10,19 @@ export async function POST(req: Request) {
   const body = (await req.json()) as PlanRequest;
   if (!body?.cafe?.name || !body.cafe.address) return Response.json({ error: "Café name and address are required." }, { status: 400 });
 
-  const model = body.mode === "offline" ? null : pickModel();
+  const models = body.mode === "offline" ? [] : pickModels();
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       const emit = (e: PlanEvent) => controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
       const ctx = { cafe: body.cafe, history: body.history ?? [] };
-      emit({ type: "start", mode: model ? "agent" : "offline", model: model?.id });
       try {
-        if (model) await runAgent(model, ctx, body.request, emit);
-        else await runOfflinePlanner(ctx, emit);
+        const planned = models.length > 0 && (await runAgent(models, ctx, body.request, emit));
+        if (!planned) {
+          // No model configured, or the model ran out of quota mid-plan: the offline planner still delivers.
+          emit({ type: "start", mode: "offline" });
+          await runOfflinePlanner(ctx, emit);
+        }
       } catch (err) {
         emit({ type: "error", message: (err as Error).message });
       }

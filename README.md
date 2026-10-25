@@ -46,7 +46,7 @@ npm run smoke                # offline planner against live Qloo, printed to the
 | `QLOO_API_KEY` | yes | Sent as `X-Api-Key` |
 | `QLOO_API_URL` | no | Defaults to `https://hackathon.api.qloo.com` |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | no | Runs the agent on Gemini; free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
-| `GEMINI_MODEL` | no | Defaults to `gemini-2.5-flash` |
+| `GEMINI_MODEL` | no | Comma-separated fallback list; defaults to `gemini-3.6-flash,gemini-3.5-flash` |
 | `ANTHROPIC_API_KEY` | no | Runs the agent on Claude (takes priority over Gemini) |
 | `ANTHROPIC_MODEL` | no | Defaults to `claude-sonnet-5-5` |
 

@@ -21,6 +21,7 @@ export default function Home() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [request, setRequest] = useState("");
   const abort = useRef<AbortController | null>(null);
 
@@ -35,6 +36,7 @@ export default function Home() {
     setError(null);
     setSteps([]);
     setThoughts("");
+    setNotice(null);
     setPlan(null);
     try {
       const res = await fetch("/api/plan", {
@@ -59,6 +61,7 @@ export default function Home() {
           const e = JSON.parse(line) as PlanEvent;
           if (e.type === "start") setMode(e.mode === "agent" ? `AI agent (${e.model})` : "Offline planner");
           else if (e.type === "text") setThoughts((t) => t + e.text);
+          else if (e.type === "notice") setNotice(e.message);
           else if (e.type === "tool-call") setSteps((s) => [...s, { id: e.id, name: e.name, input: e.input }]);
           else if (e.type === "tool-result") setSteps((s) => s.map((x) => (x.id === e.id ? { ...x, output: e.output } : x)));
           else if (e.type === "plan") {
@@ -140,6 +143,7 @@ export default function Home() {
               <aside className={`min-w-0 lg:order-2 ${plan ? "order-2" : "order-1"}`}>
                 <Trace steps={steps} running={running} thoughts={thoughts} />
                 {mode && <p className="mt-2 text-right text-[11px] text-night-400">Planner: {mode}</p>}
+                {notice && <p className="mt-1 text-right text-[11px] text-night-400">{notice}, so the offline planner finished the job.</p>}
               </aside>
             )}
           </div>

@@ -8,4 +8,5 @@ export type PlanEvent =
   | { type: "tool-result"; id: string; name: string; output: unknown }
   | { type: "plan"; plan: Plan }
   | { type: "error"; message: string }
+  | { type: "notice"; message: string }
   | { type: "done" };
