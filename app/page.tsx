@@ -59,6 +59,11 @@ export default function Home() {
         for (const line of lines) {
           if (!line.trim()) continue;
           const e = JSON.parse(line) as PlanEvent;
+          if (e.type === "start") {
+            // A new planner (fallback model or offline) starts over; show only its trace.
+            setSteps([]);
+            setThoughts("");
+          }
           if (e.type === "start") setMode(e.mode === "agent" ? `AI agent (${e.model})` : "Offline planner");
           else if (e.type === "text") setThoughts((t) => t + e.text);
           else if (e.type === "notice") setNotice(e.message);

@@ -99,6 +99,8 @@ async function attempt(
     system: SYSTEM,
     prompt: `Plan this week's ${ctx.cafe.quietNight} event for ${ctx.cafe.name}.${request ? ` The owner adds: "${request}"` : ""}`,
     tools,
+    // Always call a tool, so the model can't wander off into prose; it ends by submitting a plan.
+    toolChoice: "required",
     stopWhen: [planAccepted, stepCountIs(30)],
     maxRetries: 1,
   });
@@ -124,10 +126,15 @@ async function attempt(
           emit({ type: "plan", plan: inputs.get(part.toolCallId) as Plan });
         }
         break;
+      case "finish-step":
+        if (process.env.DEBUG_AGENT) console.error(`[agent] step finished: ${part.finishReason}`);
+        break;
       case "error": {
         const message = String((part.error as Error)?.message ?? part.error);
         if (/quota|high demand|overloaded|rate limit|429|503/i.test(message)) exhausted.set(model.id, Date.now() + COOLDOWN_MS);
-        if (!started && !last) return "retry";
+        const capacity = /quota|high demand|overloaded|rate limit|429|503/i.test(message);
+        // Another model can take over from scratch; Qloo results are cached, so the redo is cheap.
+        if ((capacity || !started) && !last) return "retry";
         const reason = /quota|rate limit|429/i.test(message) ? "hit its usage limit" : /high demand|overloaded|503/i.test(message) ? "is overloaded" : "stopped with an error";
         console.error(`[agent] ${model.id}: ${message}`);
         emit({ type: "notice", message: `${model.id} ${reason}` });
@@ -135,5 +142,6 @@ async function attempt(
       }
     }
   }
+  if (!planned) emit({ type: "notice", message: `${model.id} stopped before submitting a plan` });
   return planned ? "planned" : "failed";
 }
