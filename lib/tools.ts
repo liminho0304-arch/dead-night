@@ -53,7 +53,13 @@ export const planSchema = z.object({
         pitch: z.string().describe("One or two sentences a regular would read."),
         whyItFits: z.string().describe("Why this crowd will come, citing specific Qloo signals by name."),
         tasteSignals: z
-          .array(z.object({ label: z.string(), source: z.string().describe("tool name that produced it"), detail: z.string().optional() }))
+          .array(
+            z.object({
+              label: z.string().describe('Names the specific Qloo results, e.g. "Crowd over-indexes on dream pop and experimental".'),
+              source: z.string().describe("tool name that produced it"),
+              detail: z.string().optional(),
+            }),
+          )
           .min(2),
         menuTieIns: z.array(z.string()).describe("Specific items from the owner's menu, or a small special built from them."),
         startTime: z.string(),

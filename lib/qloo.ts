@@ -24,6 +24,37 @@ async function qloo<T>(path: string, params: Record<string, string | number | un
   return data;
 }
 
+// Qloo's genre tags sometimes include places ("Usa", "new york") and casing/spacing variants
+// ("Stand-up-Comedy" vs "comedy"). Clean them before an owner reads them.
+const NOT_A_TASTE = new Set(["usa", "us", "uk", "united states", "america", "american", "new york", "nyc", "brooklyn", "london", "los angeles", "la", "california", "chicago", "canada", "seen live"]);
+const ACRONYMS = new Set(["r&b", "edm", "uk", "lgbtq", "diy", "dj", "rnb"]);
+function prettyTag(raw: string) {
+  const s = raw.trim().replace(/[-_]+/g, " ").replace(/\s+/g, " ");
+  return s
+    .split(" ")
+    .map((w) => (ACRONYMS.has(w.toLowerCase()) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+    .join(" ");
+}
+const tagKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9&]/g, "");
+function cleanTags<T extends { name: string }>(tags: T[], take: number): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const t of tags) {
+    const name = prettyTag(t.name);
+    const key = tagKey(name);
+    if (!key || NOT_A_TASTE.has(name.toLowerCase()) || seen.has(key)) continue;
+    // "Stand Up Comedy" and "Comedy" read as one taste.
+    if ([...seen].some((k) => k.length > 3 && (key.endsWith(k) || k.endsWith(key)))) continue;
+    seen.add(key);
+    out.push({ ...t, name });
+  }
+  return out.slice(0, take);
+}
+function dedupeByName<T extends { name: string }>(list: T[], take: number): T[] {
+  const seen = new Set<string>();
+  return list.filter((x) => (seen.has(x.name.toLowerCase()) ? false : (seen.add(x.name.toLowerCase()), true))).slice(0, take);
+}
+
 const point = (lat: number, lon: number) => `POINT(${lon} ${lat})`;
 const round = (n: number | undefined, d = 3) => (n === undefined ? undefined : Math.round(n * 10 ** d) / 10 ** d);
 
@@ -88,9 +119,9 @@ export async function locate(name: string, address: string) {
 export async function localTasteTags(lat: number, lon: number, kind: TagKind, take = 10) {
   const d = await qloo<{ results: { tags: { name: string; id: string; query?: { affinity?: number } }[] } }>(
     "/v2/insights",
-    { "filter.type": "urn:tag", "filter.tag.types": TAG_KINDS[kind], "signal.location": point(lat, lon), take },
+    { "filter.type": "urn:tag", "filter.tag.types": TAG_KINDS[kind], "signal.location": point(lat, lon), take: take + 8 },
   );
-  return d.results.tags.map((t) => ({ name: t.name.trim(), id: t.id, affinity: round(t.query?.affinity) }));
+  return cleanTags(d.results.tags.map((t) => ({ name: t.name, id: t.id, affinity: round(t.query?.affinity) })), take);
 }
 
 /** Top artists/films/etc. for people around a point. */
@@ -98,9 +129,9 @@ export async function localFavorites(lat: number, lon: number, kind: EntityKind,
   const d = await qloo<{ results: { entities: RawEntity[] } }>("/v2/insights", {
     "filter.type": `urn:entity:${kind}`,
     "signal.location": point(lat, lon),
-    take,
+    take: take + 3,
   });
-  return d.results.entities.map((e) => ({ name: e.name, id: e.entity_id, affinity: round(e.query?.affinity) }));
+  return dedupeByName(d.results.entities.map((e) => ({ name: e.name, id: e.entity_id, affinity: round(e.query?.affinity) })), take);
 }
 
 /** Cross-domain: what people who go to this café also love. */
@@ -112,17 +143,17 @@ export async function crowdAlsoLikes(entityId: string, kind: EntityKind | "music
         "filter.type": "urn:tag",
         "filter.tag.types": kind === "music_genres" ? TAG_KINDS.music : TAG_KINDS.culture,
         "signal.interests.entities": entityId,
-        take,
+        take: take + 8,
       },
     );
-    return d.results.tags.map((t) => ({ name: t.name.trim(), id: t.id, affinity: round(t.query?.affinity) }));
+    return cleanTags(d.results.tags.map((t) => ({ name: t.name, id: t.id, affinity: round(t.query?.affinity) })), take);
   }
   const d = await qloo<{ results: { entities: RawEntity[] } }>("/v2/insights", {
     "filter.type": `urn:entity:${kind}`,
     "signal.interests.entities": entityId,
-    take,
+    take: take + 3,
   });
-  return d.results.entities.map((e) => ({ name: e.name, id: e.entity_id, affinity: round(e.query?.affinity) }));
+  return dedupeByName(d.results.entities.map((e) => ({ name: e.name, id: e.entity_id, affinity: round(e.query?.affinity) })), take);
 }
 
 type Hours = Partial<Record<Weekday, { opens: string; closes: string; closed: boolean }[]>>;
@@ -174,5 +205,5 @@ export async function findTags(query: string, take = 6) {
     "filter.query": query,
     take,
   });
-  return d.results.tags.map((t) => ({ id: t.id, name: t.name, appliesTo: (t.parents ?? []).map((p) => p.type.replace("urn:entity:", "")) }));
+  return d.results.tags.map((t) => ({ id: t.id, name: prettyTag(t.name), appliesTo: (t.parents ?? []).map((p) => p.type.replace("urn:entity:", "")) }));
 }

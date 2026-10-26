@@ -26,11 +26,7 @@ function summarize(name: string, output: unknown): string {
   if (output && typeof output === "object" && "error" in output) return `⚠ ${(output as { error: string }).error}`;
   const names = (xs: unknown) =>
     Array.isArray(xs)
-      ? xs
-          .slice(0, 5)
-          .map((x) => (x as { name?: string }).name)
-          .filter(Boolean)
-          .join(", ")
+      ? [...new Set(xs.map((x) => (x as { name?: string }).name).filter(Boolean))].slice(0, 5).join(", ")
       : "";
   switch (name) {
     case "locate_cafe": {

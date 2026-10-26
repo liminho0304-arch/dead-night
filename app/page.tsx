@@ -4,6 +4,8 @@ import { Trace, type TraceStep } from "@/components/Trace";
 import { PlanView } from "@/components/PlanView";
 import { EventsView } from "@/components/EventsView";
 import { ProfileForm } from "@/components/ProfileForm";
+import { LiveSignals } from "@/components/LiveSignals";
+import SAMPLE_PLAN from "@/lib/sample-plan.json";
 import { DEMO_CAFE, DEMO_HISTORY } from "@/lib/seed";
 import { nextWeekday, useStored } from "@/lib/storage";
 import type { PlanEvent } from "@/lib/events";
@@ -16,6 +18,8 @@ export default function Home() {
   const [cafe, setCafe] = useStored<CafeProfile>("dn.cafe", DEMO_CAFE);
   const [history, setHistory] = useStored<EventRecord[]>("dn.history", DEMO_HISTORY);
   const [plan, setPlan] = useStored<Plan | null>("dn.plan", null);
+  const [isSample, setIsSample] = useStored("dn.planIsSample", false);
+  const [demoDismissed, setDemoDismissed] = useStored("dn.demoDismissed", false);
   const [steps, setSteps] = useState<TraceStep[]>([]);
   const [thoughts, setThoughts] = useState("");
   const [running, setRunning] = useState(false);
@@ -27,6 +31,7 @@ export default function Home() {
 
   const approvedIds = useMemo(() => new Set(history.map((h) => h.idea.title)), [history]);
   const pendingFeedback = history.filter((h) => !h.feedback).length;
+  const isDemo = cafe.name === DEMO_CAFE.name && cafe.address === DEMO_CAFE.address;
 
   async function run() {
     abort.current?.abort();
@@ -38,6 +43,7 @@ export default function Home() {
     setThoughts("");
     setNotice(null);
     setPlan(null);
+    setIsSample(false);
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -123,29 +129,65 @@ export default function Home() {
               <input className="input mt-2" placeholder="Anything specific this week? (optional, e.g. 'something for students during finals')" value={request} onChange={(e) => setRequest(e.target.value)} />
             </div>
             <button className="btn-primary sm:self-end" onClick={run} disabled={running}>
-              {running ? "Planning…" : plan ? "Plan again" : `Plan my ${cafe.quietNight}`}
+              {running ? "Planning…" : plan ? "Plan again" : `Plan my ${cafe.quietNight.charAt(0).toUpperCase()}${cafe.quietNight.slice(1)}`}
             </button>
           </div>
 
           {error && <div className="rounded-xl border border-ember-400/40 bg-ember-400/10 p-3 text-sm text-ember-400">{error}</div>}
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className={`min-w-0 lg:order-1 ${plan ? "order-1" : "order-2"}`}>
+            <div className={`min-w-0 space-y-4 lg:order-1 ${plan || running ? "order-1" : "order-2"}`}>
+              {isDemo && !demoDismissed && !running && (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-night-700 bg-night-800/60 px-4 py-3 text-sm">
+                  <span className="flex-1">
+                    You&apos;re trying <span className="text-white">{DEMO_CAFE.name}</span>, a made-up café in Williamsburg. Put in your own café to see what your neighbourhood wants.
+                  </span>
+                  <button className="btn-ghost py-1 text-xs" onClick={() => setTab("cafe")}>
+                    Set up my café
+                  </button>
+                  <button className="text-night-400 hover:text-night-200" onClick={() => setDemoDismissed(true)} aria-label="Dismiss">
+                    ✕
+                  </button>
+                </div>
+              )}
+              {plan && isSample && (
+                <div className="rounded-xl border border-lamp-400/30 bg-lamp-400/5 px-4 py-3 text-sm text-lamp-300">
+                  This is a saved plan from an earlier run of the AI agent on the demo café, so you can see the result right away. Click <span className="font-semibold">Plan again</span> to watch the agent run live against Qloo.
+                </div>
+              )}
               {plan ? (
                 <PlanView plan={plan} cafe={cafe} defaultDate={nextWeekday(cafe.quietNight)} onApprove={approve} approvedIds={approvedIds} />
+              ) : running ? (
+                <LiveSignals steps={steps} />
               ) : (
-                !running && (
-                  <div className="card p-10 text-center">
-                    <p className="font-display text-2xl text-white">Your {cafe.quietNight}s are quiet.</p>
-                    <p className="mx-auto mt-2 max-w-md text-sm text-night-400">
-                      Dead Night looks up what your café&apos;s crowd and the neighbourhood actually love in Qloo, checks every idea against your budget, staff and hours, and learns from how past events went. You approve anything that costs money or gets announced.
-                    </p>
+                <div className="card p-10 text-center">
+                  <p className="font-display text-2xl text-white">
+                    Your <span className="capitalize">{cafe.quietNight}</span>s are quiet.
+                  </p>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-night-400">
+                    Dead Night looks up what your café&apos;s crowd and the neighbourhood actually love in Qloo, checks every idea against your budget, staff and hours, and learns from how past events went. You approve anything that costs money or gets announced.
+                  </p>
+                  <div className="mt-6 flex flex-wrap justify-center gap-3">
+                    <button className="btn-primary" onClick={run}>
+                      Run the agent live (about a minute)
+                    </button>
+                    {isDemo && (
+                      <button
+                        className="btn-ghost"
+                        onClick={() => {
+                          setPlan(SAMPLE_PLAN as Plan);
+                          setIsSample(true);
+                        }}
+                      >
+                        See a sample plan instantly
+                      </button>
+                    )}
                   </div>
-                )
+                </div>
               )}
             </div>
             {(running || steps.length > 0) && (
-              <aside className={`min-w-0 lg:order-2 ${plan ? "order-2" : "order-1"}`}>
+              <aside className={`min-w-0 lg:order-2 ${plan || running ? "order-2" : "order-1"}`}>
                 <Trace steps={steps} running={running} thoughts={thoughts} />
                 {mode && <p className="mt-2 text-right text-[11px] text-night-400">Planner: {mode}</p>}
                 {notice && <p className="mt-1 text-right text-[11px] text-night-400">{notice}, so the offline planner finished the job.</p>}

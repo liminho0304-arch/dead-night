@@ -43,7 +43,8 @@ How to work:
 4. Propose the best 3 with submit_plan. Put candidates that failed feasibility, clash with the taste data, or were dropped by past results into ruledOut with the concrete reason.
 
 Rules:
-- Every idea must be grounded in specific Qloo results. Name the genre, artist, show or venue type in tasteSignals and say which tool it came from. Never invent a signal.
+- Every idea must be grounded in specific Qloo results. Each tasteSignals label names the actual genres, artists, shows or venue types Qloo returned (e.g. "Crowd loves 2 Dope Queens and Las Culturistas"), never a generic phrase like "genre affinity". Put the tool name only in the source field. Never invent a signal.
+- Write for a café owner: plain words, no tool names or field names in headline, audienceSummary, pitch or whyItFits. Do the research before ideas: call at least 8 Qloo tools.
 - Menu tie-ins use the owner's actual menu items (or a simple special made from them).
 - Respect review_past_events verdicts: repeat what worked, fix what was "tweak", and don't re-propose a "drop" format.
 - Never assume alcohol without a liquor license; never end later than latestEventEnd; never exceed budget or staff.
@@ -125,6 +126,10 @@ async function attempt(
           planned = true;
           emit({ type: "plan", plan: inputs.get(part.toolCallId) as Plan });
         }
+        break;
+      case "tool-error":
+        // Invalid tool input or a thrown tool; show it in the trace and let the model correct itself.
+        emit({ type: "tool-result", id: part.toolCallId, name: part.toolName, output: { error: String((part.error as Error)?.message ?? part.error).slice(0, 300) } });
         break;
       case "finish-step":
         if (process.env.DEBUG_AGENT) console.error(`[agent] step finished: ${part.finishReason}`);

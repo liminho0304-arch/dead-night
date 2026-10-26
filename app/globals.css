@@ -46,3 +46,14 @@ body {
 @utility btn-ghost {
   @apply btn border border-night-600 text-night-200 hover:border-lamp-400 hover:text-lamp-300;
 }
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

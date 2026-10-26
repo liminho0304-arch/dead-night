@@ -1,0 +1,194 @@
+{
+  "headline": "Transform Tuesday evenings into a vibrant community hub by pairing Williamsburg's strong taste for experimental vinyl, local comedy podcasts, and cultural essays with Lantern & Ladle's record player and communal table.",
+  "audienceSummary": "Lantern & Ladle's Williamsburg neighborhood and café audience consists primarily of freelancers, Pratt students, and young adults aged 25-34. Qloo taste data shows this crowd over-indexes on electronic, dream pop, experimental, and indie music, comedy podcasts (like 2 Dope Queens and Las Culturistas), and cultural essay books (such as Hanif Abdurraqib's works).",
+  "ideas": [
+    {
+      "id": "spin-and-sip-vinyl",
+      "title": "Spin & Sip: Dream Pop & Experimental Vinyl Night",
+      "format": "listening night",
+      "pitch": "Bring your favorite records or sink into our curated vinyl playlist featuring dream pop, experimental, and indie tracks spun right behind the counter on our record player.",
+      "whyItFits": "Lantern & Ladle's crowd over-indexes heavily on experimental, dream pop, electronic, and indie music according to Qloo crowd_also_likes and local_taste_tags data. The café's existing record player behind the counter and long communal table make vinyl listening a natural, low-overhead Tuesday gathering.",
+      "tasteSignals": [
+        {
+          "label": "electronic, experimental, dream pop, indie music genres",
+          "source": "crowd_also_likes",
+          "detail": "High affinity for electronic, experimental, dream pop, and indie genres among café crowd"
+        },
+        {
+          "label": "Psymun, Mulherin, Daniel Caesar",
+          "source": "crowd_also_likes",
+          "detail": "Over-indexing on artists like Psymun, Mulherin, and Daniel Caesar"
+        },
+        {
+          "label": "electronic, indie, experimental local music tags",
+          "source": "local_taste_tags",
+          "detail": "Neighborhood over-indexes on electronic, indie, and experimental music"
+        }
+      ],
+      "menuTieIns": [
+        "Oat cortado",
+        "Cardamom bun",
+        "Hojicha latte"
+      ],
+      "startTime": "18:30",
+      "endTime": "20:30",
+      "estimatedCost": 75,
+      "costBreakdown": [
+        {
+          "item": "Guest vinyl DJ / selector stipend",
+          "amount": 50
+        },
+        {
+          "item": "Chalkboard signage & printed track sheets",
+          "amount": 25
+        }
+      ],
+      "staffNeeded": 2,
+      "expectedAttendance": 18,
+      "risks": [
+        "Volume levels need monitoring so guests can still chat comfortably."
+      ],
+      "announcementDraft": "Drop by Lantern & Ladle this Tuesday from 6:30-8:30 PM for Spin & Sip! We're spinning dream pop, experimental, and indie vinyl behind the counter. Pair an Oat Cortado with a warm Cardamom Bun and enjoy the tunes!",
+      "needs": {
+        "alcohol": false,
+        "amplifiedSound": true,
+        "projector": false,
+        "outdoor": false,
+        "piano": false
+      }
+    },
+    {
+      "id": "grand-st-comedy-showcase",
+      "title": "Grand St. Comedy & Podcast Live Showcase",
+      "format": "comedy open mic",
+      "pitch": "An intimate evening of local stand-up comedy and podcast-style bantering right around our communal table, featuring up-and-coming Williamsburg comedians.",
+      "whyItFits": "Qloo data shows huge local affinity for comedy and podcast personalities like 2 Dope Queens, Las Culturistas, Seek Treatment, and MESS with Sydnee Washington & Marie Faustin, as well as local comedy taste tags. Qloo audience demographic analysis confirms comedy media matches the café's 25-34 demographic skew.",
+      "tasteSignals": [
+        {
+          "label": "2 Dope Queens, Las Culturistas, Seek Treatment podcasts",
+          "source": "crowd_also_likes",
+          "detail": "Strong crowd affinity for podcasts like 2 Dope Queens, Las Culturistas, and Seek Treatment"
+        },
+        {
+          "label": "Bodega Boys, 2 Dope Queens",
+          "source": "local_favorites",
+          "detail": "Local favorites show high indexing for podcasts like Bodega Boys and 2 Dope Queens"
+        },
+        {
+          "label": "stand-up comedy and comedy tags",
+          "source": "local_taste_tags",
+          "detail": "Local taste tags highlight stand-up comedy and comedy venues"
+        }
+      ],
+      "menuTieIns": [
+        "Hojicha latte",
+        "Miso-butter toast",
+        "Cold brew"
+      ],
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "estimatedCost": 110,
+      "costBreakdown": [
+        {
+          "item": "Host & comedian honorariums",
+          "amount": 80
+        },
+        {
+          "item": "Flyer promo & mic setup",
+          "amount": 30
+        }
+      ],
+      "staffNeeded": 2,
+      "expectedAttendance": 22,
+      "risks": [
+        "Seating around the communal table fills quickly; set times must be kept strictly to schedule."
+      ],
+      "announcementDraft": "Tuesday Night Laughs at Lantern & Ladle! Join us from 7:00-9:00 PM for an intimate showcase of local Williamsburg comedians inspired by 2 Dope Queens and Las Culturistas. Grab a Miso-Butter Toast and Hojicha Latte!",
+      "needs": {
+        "alcohol": false,
+        "amplifiedSound": true,
+        "projector": false,
+        "outdoor": false,
+        "piano": false
+      }
+    },
+    {
+      "id": "communal-essay-salon",
+      "title": "Communal Table Essay & Culture Salon",
+      "format": "literary salon",
+      "pitch": "A cozy evening book and culture salon discussing contemporary music, pop culture, and identity essays over warm tea and grain bowls.",
+      "whyItFits": "Qloo crowd_also_likes books shows top affinities for cultural essay collections like Hanif Abdurraqib's 'A Little Devil in America' and 'Go Ahead in the Rain', alongside local favorite cultural books like 'More Than Enough'. The café's long communal table provides the ideal venue setting for guided conversation.",
+      "tasteSignals": [
+        {
+          "label": "A Little Devil in America, Go Ahead in the Rain",
+          "source": "crowd_also_likes",
+          "detail": "High affinity for cultural essay collections like 'A Little Devil in America' and 'Go Ahead in the Rain'"
+        },
+        {
+          "label": "More Than Enough, Slave Play",
+          "source": "local_favorites",
+          "detail": "Local favorites include contemporary literary titles like 'More Than Enough' and 'Slave Play'"
+        },
+        {
+          "label": "Essays genre tag",
+          "source": "find_tags",
+          "detail": "Media essays genre alignment for Williamsburg crowd"
+        }
+      ],
+      "menuTieIns": [
+        "Grain bowl",
+        "Hojicha latte",
+        "Oat cortado"
+      ],
+      "startTime": "18:30",
+      "endTime": "20:30",
+      "estimatedCost": 50,
+      "costBreakdown": [
+        {
+          "item": "Discussion leader / moderator honorarium",
+          "amount": 40
+        },
+        {
+          "item": "Printed discussion guides & reading excerpts",
+          "amount": 10
+        }
+      ],
+      "staffNeeded": 2,
+      "expectedAttendance": 15,
+      "risks": [
+        "Participation depends on attendees engaging with discussion prompts; moderator must keep discussion welcoming and structured."
+      ],
+      "announcementDraft": "Gather around the communal table this Tuesday 6:30-8:30 PM for our Essay & Culture Salon! We'll be chatting about music criticism and cultural essays over Hojicha Lattes and Grain Bowls. All are welcome!",
+      "needs": {
+        "alcohol": false,
+        "amplifiedSound": false,
+        "projector": false,
+        "outdoor": false,
+        "piano": false
+      }
+    }
+  ],
+  "ruledOut": [
+    {
+      "idea": "Classic Movie / TV Screening Night",
+      "reason": "Past event results showed a 'drop' verdict with -1 lift and 8 attendees due to poor screen sightlines and lack of a projector in the cafe."
+    },
+    {
+      "idea": "Tuesday Craft Beer & Trivia Night",
+      "reason": "Failed feasibility due to lack of a liquor license (liquorLicense: false). Additionally, Qloo audience profiling shows trivia nights skew heavily older (55+) compared to the cafe crowd's 25-34 demographic skew."
+    },
+    {
+      "idea": "Williamsburg Indie Rock Concert",
+      "reason": "Failed feasibility across multiple constraints: exceeded the budget ($300 vs $250 limit), exceeded available staff (required 3, only 2 available), and ran past the latest event curfew (ended at 23:30 vs 22:30 limit)."
+    },
+    {
+      "idea": "Acoustic Piano & Jazz Night",
+      "reason": "Venue lacks a piano (piano: false)."
+    }
+  ],
+  "learningsApplied": [
+    "Dropped the film/movie screening format following past event results (Classic Movie Night had negative lift and attendance of 8 due to poor sightlines and lack of a projector).",
+    "Utilized existing in-house assets (the record player behind the counter and the long communal table) to keep out-of-pocket costs well under the $250 budget limit ($50-$110).",
+    "Avoided events requiring a liquor license or piano, ensuring compliance with venue constraints."
+  ]
+}
