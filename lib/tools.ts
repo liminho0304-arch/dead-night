@@ -4,7 +4,7 @@ import { checkFeasibility, reviewHistory } from "./ops";
 import type { CafeProfile, EventRecord, Plan } from "./types";
 
 /**
- * Every tool the planner can call, shared by the Claude agent and the offline planner.
+ * Every tool the planner can call, shared by the LLM agent and the offline planner.
  * Qloo tools go to the live API; the rest read the owner's own constraints and history.
  */
 export interface ToolContext {

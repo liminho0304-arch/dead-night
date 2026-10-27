@@ -2,7 +2,7 @@
   "name": "dead-night",
   "version": "0.1.0",
   "private": true,
-  "description": "An event-planning agent for an independent café's quietest night, powered by Qloo taste data and Claude.",
+  "description": "An event-planning agent for an independent café's quietest night, powered by Qloo taste data.",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",

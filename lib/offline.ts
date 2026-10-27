@@ -4,7 +4,7 @@ import type { PlanEvent } from "./events";
 import type { CafeProfile, MenuItem, Plan, PlanIdea, TasteSignal } from "./types";
 
 /**
- * Deterministic planner used when no ANTHROPIC_API_KEY is configured. It calls the same Qloo
+ * Deterministic planner used when no model API key is configured. It calls the same Qloo
  * tools in a fixed order and matches the results against a small catalogue of café formats,
  * so the app stays fully usable (and honest about where each idea comes from) without an LLM.
  */
