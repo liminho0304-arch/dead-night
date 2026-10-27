@@ -80,6 +80,13 @@ interface RawEntity {
 
 const norm = (s: string) => s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 2 && w !== "the" && w !== "cafe" && w !== "coffee");
 
+const GENERIC_ADDR = new Set(["street", "avenue", "road", "boulevard", "suite", "unit", "floor", "north", "south", "east", "west", "united", "states"]);
+const addrWords = (s: string) =>
+  s
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => (w.length >= 4 || /^\d{5}$/.test(w)) && !GENERIC_ADDR.has(w));
+
 /**
  * Find the café in Qloo's graph. If Qloo doesn't know it (most small cafés), fall back to its
  * neighbourhood so location-based insights still work.
@@ -90,7 +97,11 @@ export async function locate(name: string, address: string) {
   const place = places.results?.find((r) => {
     if (!r.location || !wanted.length) return false;
     const got = new Set(norm(r.name));
-    return wanted.filter((w) => got.has(w)).length / wanted.length >= 0.6;
+    if (wanted.filter((w) => got.has(w)).length / wanted.length < 0.6) return false;
+    // Same name isn't enough: a "Blue Door Café" in another city is a different café. Require the
+    // address to share a place word (street, neighbourhood, city or ZIP) with the one the owner gave.
+    const placeWords = new Set(addrWords(`${(r.properties?.address as string) ?? ""} ${JSON.stringify(r.properties?.geocode ?? "")}`));
+    return addrWords(address).some((w) => placeWords.has(w));
   });
   if (place) {
     return {
